@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StandoffCraft Upgrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f0f14; --bg-panel: #1a1a24;
+            --bg-desktop: #12121a;
+            --accent-yellow: #ffcc00; --accent-green: #2bd183; --accent-blue: #4d6df1;
+            --text-white: #ffffff; --text-grey: #8b8b9b; --text-dark: #0c0c0c;
+            --border-color: #2a2a36; --radius-sm: 8px; --radius-md: 14px; --radius-lg: 24px;
+            --rarity-rare: #4d6df1; --rarity-epic: #8b5cf6; --rarity-legendary: #ec4899; --rarity-arcane: #ef4444;
+            --font: 'Inter', sans-serif;
+            --pc-header-height: 68px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); -webkit-tap-highlight-color: transparent; }
+        html, body { background: #050508; height: 100%; width: 100%; overflow: hidden; color: var(--text-white); }
+        
+        /* ====== МОБИЛЬНАЯ ВЕРСИЯ (по умолчанию) ====== */
+        .app-container { 
+            width: 100%; max-width: 100%; height: 100vh; background: var(--bg-main); 
+            display: flex; flex-direction: column; position: relative; 
+        }
+        .content-scroll { flex: 1; overflow-y: auto; scrollbar-width: none; padding-bottom: 20px; }
+        .content-scroll::-webkit-scrollbar { display: none; }
+        
+        .view { display: none; }
+        .view.active { display: block; animation: fadeIn 0.25s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0.9; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ====== ПК ВЕРСИЯ (ИСПРАВЛЕНА!) ====== */
+        @media (min-width: 1000px) {
+            .app-container { max-width: 100%; width: 100vw; height: 100vh; background: var(--bg-desktop); overflow: hidden; display: flex; flex-direction: column; }
+            .header, .bottom-nav, .drop-ticker-container { display: none !important; }
+            
+            .pc-header-top { 
+                display: flex !important; 
+                justify-content: space-between; 
+                align-items: center; 
+                padding: 0 30px; 
+                background: var(--bg-desktop); 
+                border-bottom: 1px solid var(--border-color); 
+                height: var(--pc-header-height); 
+                width: 100%; 
+                flex-shrink: 0; 
+                z-index: 100; 
+            }
+            .pc-logo-area { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 20px; letter-spacing: -0.5px; }
+            .pc-logo-area img { height: 28px; object-fit: contain; }
+            .pc-stats-area { display: flex; align-items: center; gap: 20px; font-size: 13px; font-weight: 700; }
+            .pc-stats-area .stat { display: flex; align-items: center; gap: 4px; }
+            .pc-btn-add-g { display: flex; align-items: center; gap: 6px; background: var(--accent-yellow); color: var(--text-dark); padding: 4px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; height: 34px; }
+            .pc-drop-header { display: flex; align-items: center; gap: 12px; background: #1a1a24; padding: 0 12px; border-radius: 20px; height: 34px; }
+            .pc-drop-header .live { background: var(--accent-yellow); color: var(--text-dark); font-weight: 900; padding: 0 8px; border-radius: 4px; font-size: 10px; height: 20px; display: flex; align-items: center; }
+            .pc-drop-header .drop-text { font-size: 12px; color: var(--text-white); white-space: nowrap; }
+            .pc-drop-header .drop-text span { color: #8b8b9b; }
+
+            .content-scroll { 
+                flex: 1; 
+                display: flex; 
+                flex-direction: column; 
+                height: calc(100vh - var(--pc-header-height)); 
+                padding: 20px; 
+                gap: 20px; 
+                width: 100%; 
+                overflow: hidden; 
+                background: var(--bg-desktop);
+            }
+            .view.active { 
+                display: flex !important; 
+                flex-direction: row !important;
+                gap: 20px; 
+                height: 100%; 
+                width: 100%; 
+                overflow: hidden; 
+                padding: 0; 
+            }
+            
+            .pc-col-feed { width: 280px; flex-shrink: 0; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 6px; }
+            .pc-feed-header { font-weight: 700; font-size: 14px; color: var(--text-grey); display: flex; gap: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+            .pc-feed-header span.active { color: var(--accent-yellow); }
+            .pc-feed-item { background: var(--bg-panel); border-radius: var(--radius-sm); border: 1px solid var(--border-color); padding: 10px; display: flex; align-items: center; gap: 10px; }
+            .pc-feed-item .img { width: 30px; height: 30px; background: #2b2b36; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+            .pc-feed-item .info { display: flex; flex-direction: column; }
+            .pc-feed-item .info .name { font-size: 11px; font-weight: 700; color: #ccc; }
+            .pc-feed-item .info .desc { font-size: 10px; color: #888; }
+            
+            .pc-col-shop { flex: 1; height: 100%; overflow-y: auto; padding-right: 10px; }
+            .pc-col-target { width: 320px; flex-shrink: 0; height: 100%; overflow-y: auto; background: var(--bg-panel); border-radius: var(--radius-md); border: 1px solid var(--border-color); padding: 16px; }
+            .sel-filter { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 6px 10px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+            .sel-filter .f-title { font-size: 14px; font-weight: 900; display: flex; align-items: center; gap: 8px; color: var(--text-white); }
+            .sel-filter .f-inputs { display: flex; gap: 6px; align-items: center; }
+            .sel-filter .f-box { display: flex; align-items: center; background: #12121c; border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 6px; }
+            .sel-filter .f-box .g { background: var(--accent-yellow); color: var(--text-dark); border-radius: 50%; width: 14px; height: 14px; font-size: 8px; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-right: 4px; }
+            .sel-filter .f-box input { background: transparent; border: none; width: 50px; color: white; font-size: 12px; font-weight: 700; outline: none; }
+            .pc-col-target .sel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .pc-col-target .sel-item { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; transition: 0.15s; }
+            .pc-col-target .sel-item.selected { border-color: var(--accent-yellow); }
+            .pc-col-target .sel-item .img { width: 100%; height: 50px; display: flex; justify-content: center; align-items: center; margin-bottom: 4px; }
+            .pc-col-target .sel-item .img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+            .pc-col-target .sel-item .name { font-size: 10px; font-weight: 700; color: #999; text-align: center; }
+            .pc-col-target .sel-item .price { background: var(--accent-yellow); color: var(--text-dark); padding: 1px 8px; border-radius: 10px; font-size: 10px; font-weight: 900; margin-top: 4px; display: inline-block; }
+            .pc-col-target .sel-item .check-mark { position: absolute; top: 6px; right: 6px; width: 16px; height: 16px; background: var(--accent-yellow); border-radius: 4px; display: none; align-items: center; justify-content: center; font-size: 10px; color: var(--text-dark); font-weight: 900; }
+            .pc-col-target .sel-item.selected .check-mark { display: flex; }
+        }
+
+        /* Прячем ПК элементы на мобилке */
+        .pc-col-feed, .pc-col-shop, .pc-col-target, .pc-header-top, .pc-login-btn { display: none; }
+
+        /* ====== МОБИЛЬНЫЙ ХЕДЕР И ЭЛЕМЕНТЫ ====== */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); position: sticky; top: 0; z-index: 20; }
+        .logo-area { display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 18px; letter-spacing: -0.5px; }
+        .logo-area img { height: 22px; object-fit: contain; }
+        .stats-area { display: flex; align-items: center; gap: 6px; }
+        
+        .cart-btn { background: #2a2a1e; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 6px; position: relative; cursor: pointer; height: 36px; border: 1px solid #3a3a2e; }
+        .cart-btn svg { width: 18px; height: 18px; fill: var(--text-grey); }
+        .cart-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; font-size: 9px; font-weight: 900; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid #0b0b10; }
+        
+        .btn-add-g { display: flex; align-items: center; gap: 4px; background: var(--accent-yellow); color: var(--text-dark); padding: 4px 8px; border-radius: 8px; font-weight: 700; font-size: 12px; height: 36px; border: 1px solid #ccaa00; }
+        .btn-add-g span { font-size: 14px; font-weight: 900; }
+        
+        .avatar-btn { width: 36px; height: 36px; background: #6e7b8c; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; color: #fff; position: relative; cursor: pointer; }
+        .avatar-btn::after { content: ''; position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; background: #22c55e; border-radius: 50%; border: 2px solid var(--bg-main); }
+
+        .drop-ticker-container {
+            background-color: var(--bg-panel);
+            margin: 0 16px 12px 16px;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 38px;
+            overflow: hidden;
+        }
+        .drop-ticker-icon { background: var(--accent-yellow); color: var(--text-dark); font-weight: 900; padding: 0 8px; border-radius: 4px; height: 100%; display: flex; align-items: center; font-size: 10px; flex-shrink: 0; }
+        .drop-ticker-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 400; color: var(--text-grey); }
+
+        .top-scroll { display: flex; gap: 10px; padding: 0 16px 16px; overflow-x: auto; scrollbar-width: none; }
+        .top-item { background: var(--bg-panel); padding: 6px 10px; border-radius: var(--radius-sm); min-width: 130px; display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-color); }
+        .top-item .img { width: 32px; height: 32px; background: #2b2b36; border-radius: 4px; }
+        .top-item .info { display: flex; flex-direction: column; flex: 1; }
+        .top-item .info span { font-size: 10px; font-weight: 700; white-space: nowrap; }
+        .top-item .info small { background: var(--accent-yellow); color: var(--text-dark); padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 900; margin-top: 2px; text-align: center; width: fit-content; }
+
+        .banners { display: flex; gap: 8px; padding: 0 16px 12px; }
+        .banner { flex: 1; background: var(--bg-panel); padding: 8px 12px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-color); }
+        .banner .icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255, 204, 0, 0.15); }
+        .banner h4 { font-size: 11px; font-weight: 700; }
+        .banner p { font-size: 9px; color: var(--text-grey); }
+        .banner .cross { margin-left: auto; color: #555; font-size: 12px; cursor: pointer; }
+
+        .action-bar { display: flex; justify-content: center; gap: 6px; padding: 0 16px 20px; }
+        .action-btn { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--text-white); cursor: pointer; height: 32px; }
+        .action-btn.active { background: var(--accent-yellow); color: var(--text-dark); border-color: var(--accent-yellow); }
+
+        /* Upgrade Interface - Mobile & Center */
+        .upgrade-main-layout { display: flex; justify-content: space-between; align-items: stretch; padding: 0 8px 16px; gap: 6px; }
+        .upgrade-side-block {
+            flex: 1; background: var(--bg-panel); border-radius: var(--radius-md); padding: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 130px; border: 1px solid #2b2b36; position: relative; text-align: center;
+        }
+        .upgrade-side-block .title { font-size: 9px; font-weight: 700; color: var(--text-grey); position: absolute; top: 6px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+        .upgrade-side-block .sub-text { font-size: 8px; color: #555; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+        .upgrade-side-block .img-wrapper { width: 80px; height: 60px; background: transparent; display: flex; justify-content: center; align-items: center; margin-top: 10px; }
+        .upgrade-side-block .img-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .upgrade-side-block .price-tag { margin-top: 4px; background: var(--accent-yellow); color: var(--text-dark); padding: 2px 8px; border-radius: 10px; font-weight: 900; font-size: 10px; display: flex; align-items: center; gap: 2px; }
+        .upgrade-side-block .select-btn { margin-top: 10px; width: 40px; height: 40px; border: 1px dashed #555; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--text-grey); cursor: pointer; background: transparent; }
+        .upgrade-side-block .bottom-label { font-size: 8px; font-weight: 700; margin-top: 4px; color: var(--text-grey); }
+
+        .center-wheel-container { width: 130px; display: flex; flex-direction: column; align-items: center; }
+        .wheel-circle-wrapper { position: relative; width: 130px; height: 130px; margin-bottom: 8px; }
+        .wheel-circle-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: #1a1a24; }
+        .wheel-circle-progress { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; transition: 0.3s; }
+        .wheel-circle-center { position: absolute; top: 10px; left: 10px; width: 110px; height: 110px; background: var(--bg-main); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .wheel-circle-center .perc { font-size: 24px; font-weight: 900; line-height: 1; }
+        .wheel-circle-center .status { font-size: 9px; font-weight: 700; margin-top: 2px; }
+        .status.waiting { color: var(--text-grey); }
+        .status.medium { color: var(--accent-yellow); }
+        .status.high { color: var(--accent-green); }
+
+        .btn-prokachat-main { width: 100%; padding: 10px 0; background: #2a2a36; border: none; border-radius: var(--radius-sm); color: #555; font-weight: 900; font-size: 13px; cursor: default; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
+        .btn-prokachat-main.active { background: var(--accent-yellow); color: var(--text-dark); cursor: pointer; box-shadow: 0 4px 10px rgba(255, 204, 0, 0.2); }
+
+        .chance-controls { margin: 8px 16px 10px; background: var(--bg-panel); border-radius: var(--radius-md); padding: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .chance-top-row { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; }
+        .chance-top-row .label { color: var(--text-grey); }
+        .chance-top-row .val { color: var(--accent-yellow); }
+        .chance-buttons { display: flex; gap: 6px; }
+        .chance-buttons .btn { flex: 1; background: #12121c; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-white); padding: 6px 0; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.15s; }
+        .chance-buttons .btn.max { background: #2b2b1e; border-color: #4a4a2e; }
+        .chance-buttons .btn:active { transform: scale(0.95); }
+        .chance-slider { width: 100%; height: 4px; -webkit-appearance: none; background: #2b2b36; border-radius: 2px; outline: none; margin-top: 4px; }
+        .chance-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent-yellow); cursor: pointer; }
+
+        .multiplier-presets { display: flex; gap: 6px; padding: 0 16px 12px; justify-content: center; }
+        .multiplier-presets .btn { flex: 1; background: #181822; border: 1px solid #2b2b36; border-radius: var(--radius-sm); color: var(--text-white); padding: 6px 0; font-size: 11px; font-weight: 700; text-align: center; cursor: pointer; transition: 0.15s; }
+        .multiplier-presets .btn.green { color: var(--accent-green); }
+        .multiplier-presets .btn.red { color: var(--accent-red); }
+        .multiplier-presets .btn.selected { border-color: var(--accent-yellow); background: #2a2a1e; }
+        .multiplier-presets .btn:active { transform: scale(0.95); }
+
+        .selection-area { margin-top: 6px; border-top: 1px solid var(--border-color); padding: 16px 16px 20px; }
+        .sel-tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+        .sel-tabs .tab { flex: 1; padding: 8px 0; text-align: center; border-radius: var(--radius-md); font-size: 11px; font-weight: 700; cursor: pointer; background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-grey); transition: 0.1s; }
+        .sel-tabs .tab.active { background: var(--accent-yellow); color: var(--text-dark); border-color: var(--accent-yellow); }
+        .sel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .sel-item { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.1s; position: relative; }
+        .sel-item:active { transform: scale(0.96); }
+        .sel-item .img { width: 100%; height: 40px; display: flex; justify-content: center; align-items: center; }
+        .sel-item .img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .sel-item .name { font-size: 8px; font-weight: 700; color: #999; text-align: center; margin-top: 2px; }
+        .sel-item .price { background: var(--accent-yellow); color: var(--text-dark); padding: 1px 6px; border-radius: 8px; font-size: 9px; font-weight: 900; margin-top: 4px; display: inline-block; }
+        .sel-item.selected { border-color: var(--accent-yellow); }
+        .sel-item .check-mark { position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; background: var(--accent-yellow); border-radius: 4px; display: none; align-items: center; justify-content: center; font-size: 8px; color: var(--text-dark); font-weight: 900; }
+        .sel-item.selected .check-mark { display: flex; }
+
+        .empty-state { display: flex; flex-direction: column; align-items: center; padding: 30px 16px 40px; text-align: center; }
+        .empty-state .icon { width: 80px; height: 80px; background: #1a1a24; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 36px; margin-bottom: 16px; color: #444; }
+        .empty-state h3 { font-size: 16px; font-weight: 900; margin-bottom: 6px; }
+        .empty-state p { font-size: 12px; color: var(--text-grey); max-width: 200px; line-height: 1.4; margin-bottom: 16px; }
+        .btn-to-shop { background: #2b2b36; border: none; color: white; padding: 10px 16px; border-radius: var(--radius-md); font-weight: 700; width: 100%; max-width: 220px; cursor: pointer; }
+
+        /* ====== МОДАЛЬНЫЕ ОКНА ====== */
+        .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 50; display: none; flex-direction: column; justify-content: flex-end; backdrop-filter: blur(4px); }
+        .modal-overlay.active { display: flex; }
+        .modal-cart { background: var(--bg-main); border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-height: 90%; width: 100%; padding-bottom: 20px; display: flex; flex-direction: column; animation: slideUp 0.25s ease; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .cart-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .cart-title { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 18px; }
+        .cart-title .icon-circle { background: var(--accent-yellow); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-dark); }
+        .cart-title .title-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
+        .cart-title .title-text span { font-size: 10px; font-weight: 400; color: var(--text-grey); margin-top: 2px; }
+        .cart-close { background: #2b2b36; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cart-list { flex: 1; overflow-y: auto; padding: 16px 16px 10px; display: flex; flex-direction: column; gap: 10px; max-height: 350px; }
+        .cart-item { background: var(--bg-panel); border-radius: var(--radius-sm); padding: 10px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-color); }
+        .cart-item-img { width: 44px; height: 44px; background: #15151f; border-radius: 6px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+        .cart-item-info { flex: 1; display: flex; flex-direction: column; }
+        .cart-item-info .name-top { font-size: 12px; font-weight: 700; }
+        .cart-item-info .sub-bottom { font-size: 10px; color: var(--text-grey); }
+        .cart-item-info .price-g { font-size: 11px; color: var(--accent-yellow); font-weight: 700; margin-top: 2px; }
+        .cart-item-ctrl { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .qty-box { display: flex; align-items: center; gap: 8px; background: #111118; border-radius: 8px; padding: 2px 8px; border: 1px solid #2b2b36; }
+        .qty-btn { background: transparent; border: none; color: white; cursor: pointer; font-size: 14px; font-weight: 700; line-height: 1; }
+        .qty-val { font-size: 12px; font-weight: 700; min-width: 14px; text-align: center; }
+        .cart-del { font-size: 10px; color: #ef4444; font-weight: 700; cursor: pointer; background: transparent; border: none; margin-top: 2px; }
+
+        .cart-footer { padding: 14px 16px 0; border-top: 1px solid var(--border-color); }
+        .cart-total { display: flex; justify-content: space-between; align-items: center; padding: 6px 0 12px; }
+        .cart-total .label { font-size: 11px; font-weight: 700; color: var(--text-grey); }
+        .cart-total .val { font-size: 20px; font-weight: 900; color: var(--accent-yellow); display: flex; align-items: center; gap: 4px; }
+        .cart-total .val .gg { font-size: 14px; color: var(--text-grey); font-weight: 700; }
+        .cart-actions { display: flex; gap: 10px; }
+        .btn-clear { flex: 1; background: #2b2b36; border: none; color: white; padding: 12px; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; font-size: 14px; }
+        .btn-pay { flex: 2; background: var(--accent-yellow); border: none; color: var(--text-dark); padding: 12px; border-radius: var(--radius-md); font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(255, 204, 0, 0.15); }
+        .btn-pay.disabled { background: #3a3a3a; color: #777; box-shadow: none; cursor: default; }
+
+        .action-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 45; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .action-modal.active { display: flex; }
+        .action-box { background: var(--bg-main); width: 80%; max-width: 280px; border-radius: var(--radius-lg); padding: 24px; border: 1px solid var(--border-color); text-align: center; animation: fadeIn 0.2s ease; }
+        .action-box h4 { font-size: 15px; font-weight: 900; margin-bottom: 2px; color: var(--text-white); }
+        .action-box .inv-modal-sub { color: #666; font-size: 11px; font-weight: 600; margin-bottom: 20px; }
+        .action-box .btn-group { display: flex; flex-direction: column; gap: 8px; }
+        .btn-upgrade { width: 100%; padding: 12px; background: #4d6df1; color: white; border: none; border-radius: var(--radius-md); font-weight: 900; font-size: 14px; cursor: pointer; }
+        .btn-sell { width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: var(--radius-md); font-weight: 900; font-size: 14px; cursor: pointer; }
+        .btn-close-modal { width: 100%; padding: 12px; background: #2b2b36; color: #888; border: none; border-radius: var(--radius-md); font-weight: 700; font-size: 14px; cursor: pointer; margin-top: 4px; }
+
+        .profile-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 44; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .profile-modal.active { display: flex; }
+        .profile-box { background: var(--bg-main); border-radius: var(--radius-lg); padding: 20px; margin: 0 20px; width: 100%; max-width: 340px; border: 1px solid var(--border-color); max-height: 90%; overflow-y: auto; animation: fadeIn 0.2s ease; }
+        .profile-box .header-p { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .profile-box .header-p h3 { font-size: 18px; font-weight: 900; color: var(--text-white); }
+        .profile-box .header-p .close-p { background: #2b2b36; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .profile-avatar-section { background: var(--bg-panel); border-radius: var(--radius-md); padding: 16px; border: 1px solid var(--border-color); margin-bottom: 16px; }
+        .profile-avatar-section h4 { font-size: 12px; font-weight: 700; color: var(--text-grey); margin-bottom: 12px; }
+        .avatar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .av-grid-item { width: 100%; aspect-ratio: 1/1; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; cursor: pointer; border: 2px solid transparent; transition: 0.2s; color: #fff; }
+        .av-grid-item.selected { border-color: var(--accent-yellow); }
+        .profile-nick-section { background: var(--bg-panel); border-radius: var(--radius-md); padding: 16px; border: 1px solid var(--border-color); margin-bottom: 16px; }
+        .profile-nick-section h4 { font-size: 12px; font-weight: 700; color: var(--text-grey); margin-bottom: 12px; }
+        .nick-input-wrapper { display: flex; align-items: center; gap: 10px; background: #0f0f14; border-radius: var(--radius-sm); padding: 0 12px; border: 1px solid #2b2b36; }
+        .nick-input-wrapper input { flex: 1; padding: 12px 0; background: transparent; border: none; color: white; font-weight: 700; font-size: 14px; outline: none; }
+        .nick-input-wrapper .save-btn-small { background: var(--accent-yellow); border: none; color: var(--text-dark); padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px; }
+
+        .menu-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 40; display: none; align-items: flex-end; backdrop-filter: blur(4px); }
+        .menu-overlay.active { display: flex; }
+        .menu-panel { background: var(--bg-main); border-radius: var(--radius-lg) var(--radius-lg) 0 0; width: 100%; padding: 16px 20px 30px; border-top: 1px solid var(--border-color); animation: slideUp 0.3s ease; }
+        .menu-header { display: flex; justify-content: space-between; margin-bottom: 16px; }
+        .menu-header .id-box { display: flex; flex-direction: column; }
+        .menu-header .id-label { font-size: 10px; color: var(--text-grey); font-weight: 700; }
+        .menu-header .id-num { font-size: 16px; font-weight: 900; color: var(--text-white); }
+        .menu-header .menu-close { background: #2b2b36; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .menu-divider { height: 1px; background: var(--border-color); margin: 12px 0; }
+        .menu-item-list { display: flex; flex-direction: column; gap: 6px; }
+        .menu-option { display: flex; align-items: center; gap: 12px; padding: 12px 0; cursor: pointer; font-weight: 700; color: var(--text-grey); transition: 0.2s; font-size: 13px; }
+        .menu-option svg { width: 20px; height: 20px; fill: var(--text-grey); }
+        .menu-option:hover { color: var(--text-white); }
+
+        .settings-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; display: none; backdrop-filter: blur(4px); }
+        .settings-overlay.active { display: flex; flex-direction: column; }
+        .settings-panel { background: var(--bg-main); border-radius: var(--radius-lg) var(--radius-lg) 0 0; margin-top: auto; padding: 20px; height: 75%; overflow-y: auto; animation: slideUp 0.25s ease; }
+        .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .settings-header h2 { font-size: 18px; font-weight: 900; display: flex; align-items: center; gap: 10px; color: var(--text-white); }
+        .settings-header h2 span { background: #2b2b36; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-grey); }
+        .settings-header .close { width: 28px; height: 28px; background: #2b2b36; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .settings-group { margin-bottom: 20px; }
+        .settings-title-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .settings-title-row span:first-child { font-weight: 700; font-size: 13px; color: var(--text-white); }
+        .settings-title-row span:last-child { color: var(--accent-yellow); font-size: 10px; font-weight: 700; cursor: pointer; }
+        .settings-desc { font-size: 10px; color: var(--text-grey); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .quick-buttons { display: flex; gap: 8px; background: var(--bg-panel); border-radius: var(--radius-sm); padding: 10px; border: 1px solid var(--border-color); }
+        .quick-btn { flex: 1; padding: 8px 0; text-align: center; border-radius: var(--radius-sm); font-weight: 700; font-size: 13px; background: #12121c; color: var(--text-white); cursor: pointer; border: 1px solid transparent; transition: 0.2s; position: relative; }
+        .quick-btn.selected { border-color: var(--accent-blue); }
+        .quick-btn.selected::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; background: var(--accent-blue); border-radius: 50%; }
+        .radio-group { display: flex; flex-direction: column; gap: 8px; }
+        .radio-btn { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .radio-btn.active { border-color: var(--accent-yellow); background: #22221e; }
+        .radio-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #444; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .radio-btn.active .radio-dot { border-color: var(--accent-yellow); }
+        .radio-dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: transparent; }
+        .radio-btn.active .radio-dot::after { background: var(--accent-yellow); }
+        .radio-text h5 { font-size: 12px; font-weight: 700; color: var(--text-white); }
+        .radio-text p { font-size: 9px; color: var(--text-grey); }
+        .save-btn { width: 100%; padding: 12px; background: var(--accent-yellow); color: var(--text-dark); border: none; border-radius: var(--radius-md); font-weight: 900; font-size: 15px; cursor: pointer; margin-top: 10px; box-shadow: 0 2px 8px rgba(255, 204, 0, 0.15); }
+
+        .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; background: #15151f; height: 75px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2b2b36; padding: 0 10px 6px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; z-index: 30; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-grey); font-size: 9px; font-weight: 700; gap: 2px; cursor: pointer; flex: 1; }
+        .nav-item svg { width: 20px; height: 20px; fill: var(--text-grey); }
+        .nav-item.active { color: var(--accent-yellow); }
+        .nav-item.active svg { fill: var(--accent-yellow); }
+        .nav-center { background: var(--accent-yellow); width: 54px; height: 54px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 14px; color: var(--text-dark); font-weight: 900; font-size: 10px; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3); flex-shrink: 0; margin-left: auto; margin-right: auto; }
+        .nav-center svg { width: 22px; height: 22px; fill: var(--text-dark); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- ====== МОБИЛЬНЫЙ ХЕДЕР (скрыт на ПК) ====== -->
+    <div class="header">
+        <div class="logo-area">
+            <img src="logo.png" alt="Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <svg viewBox="0 0 24 24" style="display:none;width:22px;height:22px;fill:var(--accent-yellow);"><path d="M12 2L2 22h20L12 2zm0 4.5L18.5 20h-13L12 6.5z"/></svg>
+            STANDOFFCRAFT
+        </div>
+        <div class="stats-area">
+            <div class="cart-btn" onclick="toggleCartModal()">
+                <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                <span class="cart-badge" id="headerBadge">0</span>
+            </div>
+            <div class="btn-add-g"><span>+</span> <span id="userBalanceDisplay">100</span> <span style="color:var(--text-dark);">G</span></div>
+            <div class="avatar-btn" id="avatarBtnHeader" onclick="toggleMenu()">M</div>
+        </div>
+    </div>
+
+    <!-- ====== ПК ХЕДЕР (скрыт на мобилке) ====== -->
+    <div class="pc-header-top">
+        <div class="pc-logo-area">
+            <img src="logo.png" alt="Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <svg viewBox="0 0 24 24" style="display:none;width:24px;height:24px;fill:var(--accent-yellow);"><path d="M12 2L2 22h20L12 2zm0 4.5L18.5 20h-13L12 6.5z"/></svg>
+            StandoffCraft
+        </div>
+        <div class="pc-stats-area">
+            <div class="stat"><svg width="14" height="14" viewBox="0 0 24 24" fill="#ffcc00"><circle cx="12" cy="12" r="10"/></svg> 2 059</div>
+            <div class="stat"><svg width="14" height="14" viewBox="0 0 24 24" fill="#ffcc00"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> 26 263 097</div>
+            <div class="stat"><svg width="14" height="14" viewBox="0 0 24 24" fill="#ffcc00"><path d="M20 6h-2V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM8 4h8v2H8V4zm12 16H4V8h16v12z"/></svg> Ежедневки</div>
+            <div class="pc-btn-add-g"><span>+</span> 0 G</div>
+            <div class="pc-drop-header">
+                <div class="live">LIVE</div>
+                <div class="drop-text" id="pcDropText">Загрузка дропа...</div>
+            </div>
+            <div class="avatar-btn" id="avatarBtnHeaderPC" onclick="toggleMenu()" style="width:32px;height:32px;font-size:14px;">M</div>
+        </div>
+    </div>
+
+    <!-- ====== СКРОЛЛ-КОНТЕНТ ====== -->
+    <div class="content-scroll">
+        <div id="view-upgrade" class="view active">
+            <!-- Мобильный дроп (скрыт на ПК через display:none) -->
+            <div class="drop-ticker-container">
+                <div class="drop-ticker-icon">LIVE</div>
+                <div class="drop-ticker-text" id="dropTickerText">Загрузка дропа...</div>
+            </div>
+
+            <!-- ПК - Левая колонка -->
+            <div class="pc-col-feed">
+                <div class="pc-feed-header">
+                    <span class="active">LIVE FEED</span>
+                    <span>REALTIME</span>
+                </div>
+                <div id="pcLiveFeedContainer" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;height:100%;padding-right:4px;"></div>
+            </div>
+
+            <!-- ПК / Мобилка - Центральная колонка (Магазин и Апгрейд) -->
+            <div class="pc-col-shop">
+                <div class="top-scroll" id="carouselContainer"></div>
+                <div class="banners">
+                    <div class="banner">
+                        <div class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="#ffcc00"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM7 10.82C5.84 10.4 5 9.3 5 8V7h2v3.82zM19 8c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg></div>
+                        <div><h4>Розыгрыш 30 000...</h4><p>апгрейд 10-70%...</p></div>
+                    </div>
+                    <div class="banner" style="background:#1a221e; border-color:#2a4232;">
+                        <div class="icon" style="background:rgba(0,200,100,0.15);"><svg width="14" height="14" viewBox="0 0 24 24" fill="#2bd183"><path d="M20 6h-2V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM8 4h8v2H8V4zm12 16H4V8h16v12z"/></svg></div>
+                        <div><h4>Ежедневки</h4><p>награда за подписку</p></div>
+                    </div>
+                </div>
+                <div class="action-bar">
+                    <div class="action-btn" onclick="openSettings()"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59-.24 1.13-.57 1.62-.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c-.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> Инфо</div>
+                    <div class="action-btn active" id="soundBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div>
+                    <div class="action-btn" id="muteBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></div>
+                </div>
+
+                <!-- Центральный интерфейс апгрейда -->
+                <div class="upgrade-main-layout">
+                    <div class="upgrade-side-block" id="leftSkinBlock">
+                        <div class="title">ВЫБЕРИТЕ СКИНЫ</div>
+                        <div class="sub-text" id="slotCounter">0 из 6</div>
+                        <div class="img-wrapper" id="selectedSkinImgWrapper">
+                            <div style="color: #555; font-size: 8px; text-align: center;" id="emptySlotText">Пусто</div>
+                        </div>
+                        <div class="price-tag" id="selectedSkinPrice" style="display: none;">0 G</div>
+                        <div class="select-btn" id="selectSkinsBtn" onclick="scrollToShop()" style="margin-top: 8px;">+</div>
+                        <div class="bottom-label">ИЗ ИНВЕНТАРЯ</div>
+                    </div>
+
+                    <div class="center-wheel-container">
+                        <div class="wheel-circle-wrapper">
+                            <div class="wheel-circle-bg"></div>
+                            <div class="wheel-circle-progress" id="wheelProgress" style="background: conic-gradient(from 270deg, transparent 0%, transparent 100%);"></div>
+                            <div class="wheel-circle-center">
+                                <div class="perc" id="chancePerc">?%</div>
+                                <div class="status waiting" id="chanceStatus">ОЖИДАНИЕ СКИНОВ</div>
+                            </div>
+                        </div>
+                        <button class="btn-prokachat-main disabled" id="btnProkachatMain" onclick="startWheelUpgrade()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            ПРОКАЧАТЬ
+                        </button>
+                    </div>
+
+                    <div class="upgrade-side-block" id="rightTargetBlock">
+                        <div class="title">ВЫБЕРИТЕ ЦЕЛЬ</div>
+                        <div class="img-wrapper" id="targetImgWrapper">
+                            <div style="color: #555; font-size: 8px; text-align: center;" id="emptyTargetText">Не выбрана</div>
+                        </div>
+                        <div class="price-tag" id="targetPrice" style="display: none;">0 G</div>
+                        <div class="select-btn" id="selectTargetBtn" style="border-radius: 50%; font-size: 18px; margin-top: 8px;" onclick="scrollToTargetSelect()">◎</div>
+                        <div class="bottom-label">ИЗ СПИСКА СПРАВА</div>
+                    </div>
+                </div>
+
+                <!-- Контролы шанса -->
+                <div class="chance-controls">
+                    <div class="chance-top-row">
+                        <span class="label">ДОБАВИТЬ К ШАНСУ:</span>
+                        <span class="val" id="chanceAddVal">0 G</span>
+                    </div>
+                    <div class="chance-buttons">
+                        <button class="btn" onclick="addChance(1)">+1</button>
+                        <button class="btn" onclick="addChance(10)">+10</button>
+                        <button class="btn" onclick="addChance(100)">+100</button>
+                        <button class="btn max" onclick="addChance('max')">MAX</button>
+                    </div>
+                    <input type="range" class="chance-slider" id="chanceSlider" min="0" max="95" value="0" oninput="updateChanceFromSlider()">
+                </div>
+
+                <div class="multiplier-presets">
+                    <button class="btn" onclick="setPreset('x7')">X7</button>
+                    <button class="btn" onclick="setPreset('x4')">X4</button>
+                    <button class="btn" onclick="setPreset('x10')">X10</button>
+                    <button class="btn green" onclick="setPreset('50%')">50%</button>
+                    <button class="btn green" onclick="setPreset('85%')">85%</button>
+                    <button class="btn red" onclick="setPreset('28%')">28%</button>
+                </div>
+
+                <!-- Область выбора (Инвентарь/Желаемые) -->
+                <div class="selection-area" id="targetSelectionArea">
+                    <div class="sel-tabs">
+                        <div class="tab active" id="tab-myItems" onclick="switchSelectionTab('my', this)">МОИ ПРЕДМЕТЫ</div>
+                        <div class="tab" id="tab-wishlist" onclick="switchSelectionTab('wish', this)">ЖЕЛАЕМЫЕ</div>
+                    </div>
+                    <div class="sel-grid" id="selectionGridContainer"></div>
+                </div>
+            </div>
+
+            <!-- ПК - Правая колонка (Цели) -->
+            <div class="pc-col-target">
+                <div class="sel-filter">
+                    <div class="f-title">
+                        <span style="background:var(--accent-yellow);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text-dark);font-size:14px;">◎</span>
+                        ПРОКАЧАТЬ ДО
+                    </div>
+                    <div class="f-inputs">
+                        <div class="f-box"><span class="g">G</span><input type="number" min="0" placeholder="0" id="pcPriceMin" onchange="filterPCTargets()"></div>
+                        <div style="color:#555;">—</div>
+                        <div class="f-box"><span class="g">G</span><input type="number" min="0" placeholder="∞" id="pcPriceMax" onchange="filterPCTargets()"></div>
+                    </div>
+                </div>
+                <div id="pcTargetGrid" class="sel-grid"></div>
+            </div>
+        </div>
+
+        <div id="view-tasks" class="view">
+            <div class="tasks-wrapper">
+                <div class="task-card">
+                    <div class="task-badge" style="color:var(--accent-green);border:1px solid #2a4232;border-radius:20px;padding:2px 10px;display:inline-block;font-size:10px;font-weight:700;margin-bottom:8px;background:#2b4a3a;">🎁 ЕЖЕДНЕВНЫЕ НАГРАДЫ</div>
+                    <h3>Бесплатный бонус каждый день</h3>
+                    <p>Привяжите Telegram, подпишитесь на канал и забирайте награды по лестнице дней.</p>
+                    <div class="task-buttons">
+                        <div class="task-btn"><span class="dot" style="background:var(--accent-green);width:6px;height:6px;border-radius:50%;display:inline-block;"></span> Бесплатно</div>
+                        <div class="task-btn"><span class="icon" style="color:var(--accent-green);">🔥</span> Streak-лестница</div>
+                        <div class="task-btn"><span class="icon" style="color:var(--accent-green);">⏱</span> 24 ч подписки</div>
+                    </div>
+                </div>
+                <div class="task-next-box">
+                    <div class="label" style="color:var(--accent-green);">СЛЕДУЮЩАЯ НАГРАДА</div>
+                    <div class="sub" style="color:#666;">ДЕНЬ 2 · СЕЙЧАС</div>
+                    <div class="task-gift-icon" style="background:#222;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin:10px auto 0;">🎁</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== МОБИЛЬНАЯ НАВИГАЦИЯ ====== -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="navigateTo('view-upgrade', this)">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>АПГРЕЙД
+        </div>
+        <div class="nav-center" onclick="navigateTo('view-tasks', this)">
+            <svg viewBox="0 0 24 24"><path d="M20 6h-2V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM8 4h8v2H8V4zm12 16H4V8h16v12z"/></svg>ЗАДАНИЯ
+        </div>
+        <div class="nav-item" onclick="toggleMenu()">
+            <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>МЕНЮ
+        </div>
+    </div>
+</div>
+
+<script>
+    // 96 СКИНОВ
+    const fullShopData = [
+        { name: 'G22 "STARFALL"', price: 1, rarity: 'rare' },
+        { name: 'DESERT EAGLE "ACE"', price: 1, rarity: 'rare' },
+        { name: 'P350 "ONI"', price: 1, rarity: 'rare' },
+        { name: 'GRAFFITI "PIGEON"', price: 2, rarity: 'legendary' },
+        { name: 'CHARM "PINGO"', price: 2, rarity: 'epic' },
+        { name: 'FABM "FIEND"', price: 2, rarity: 'rare' },
+        { name: 'USP "PISCES"', price: 3, rarity: 'epic' },
+        { name: 'FN FAL "TACTICAL"', price: 3, rarity: 'epic' },
+        { name: 'GRAFFITI "TOXIC"', price: 3, rarity: 'legendary' },
+        { name: 'AKR "EVOLUTION"', price: 4, rarity: 'rare' },
+        { name: 'AWM "KINGS"', price: 4, rarity: 'epic' },
+        { name: 'MP7 "BANANA"', price: 4, rarity: 'rare' },
+        { name: 'P350 "OOZE"', price: 4, rarity: 'epic' },
+        { name: 'F/S "TOXIC"', price: 5, rarity: 'epic' },
+        { name: 'CHARM "HEXCATCHER"', price: 5, rarity: 'rare' },
+        { name: 'STICKER "RAMEN"', price: 5, rarity: 'rare' },
+        { name: 'F/S "PINK SHOT"', price: 5, rarity: 'epic' },
+        { name: 'MP7 "PALACE"', price: 6, rarity: 'epic' },
+        { name: 'AKR12 "STEAM BEAST"', price: 6, rarity: 'epic' },
+        { name: 'TEC-9 "TIE DYE"', price: 6, rarity: 'epic' },
+        { name: 'G22 "STARFALL"', price: 7, rarity: 'rare' },
+        { name: 'AKR "ARMORED"', price: 7, rarity: 'rare' },
+        { name: 'AKR12 "CARBON"', price: 10, rarity: 'epic' },
+        { name: 'STICKER "PENGZILLA"', price: 10, rarity: 'rare' },
+        { name: 'M40 "BEAGLE"', price: 11, rarity: 'rare' },
+        { name: 'STICKER "TORNADO"', price: 12, rarity: 'rare' },
+        { name: 'VAL "RONIN"', price: 15, rarity: 'legendary' },
+        { name: 'STICKER "SIGIL SWAP"', price: 15, rarity: 'legendary' },
+        { name: 'TEC-9 "DISGUISE"', price: 17, rarity: 'legendary' },
+        { name: 'TEC-9 "FABLE"', price: 18, rarity: 'legendary' },
+        { name: 'AKR "NANO"', price: 19, rarity: 'rare' },
+        { name: 'FAMAS "RITUAL"', price: 20, rarity: 'legendary' },
+        { name: 'STICKER "NICE SKILL"', price: 22, rarity: 'rare' },
+        { name: 'M40 "QUAKE"', price: 25, rarity: 'epic' },
+        { name: 'M40 "NORTHERN LIGHTS"', price: 25, rarity: 'legendary' },
+        { name: 'FABM "GANSTER"', price: 27, rarity: 'legendary' },
+        { name: 'P90 "DRAGON FLAME"', price: 30, rarity: 'legendary' },
+        { name: 'F/S "CAMO STORM"', price: 32, rarity: 'rare' },
+        { name: 'STICKER "PRO"', price: 35, rarity: 'rare' },
+        { name: 'P90 "OOPS"', price: 35, rarity: 'legendary' },
+        { name: 'M4 "IRONCLAD"', price: 38, rarity: 'legendary' },
+        { name: 'M4A1 "SERPENT"', price: 40, rarity: 'epic' },
+        { name: 'M40 "WHITE ASH"', price: 46, rarity: 'epic' },
+        { name: 'SPAS "RAIDER"', price: 49, rarity: 'epic' },
+        { name: 'M16 "NAGA"', price: 50, rarity: 'legendary' },
+        { name: 'F/S "VENOM"', price: 57, rarity: 'arcane' },
+        { name: 'M4 "NIGHT WOLF"', price: 64, rarity: 'legendary' },
+        { name: 'AWM "DRAGON"', price: 67, rarity: 'legendary' },
+        { name: 'DESERT EAGLE "DRAGON GLASS"', price: 69, rarity: 'epic' },
+        { name: 'STICKER "KITSUNE"', price: 70, rarity: 'rare' },
+        { name: 'FN FAL "EMPYREAN"', price: 82, rarity: 'legendary' },
+        { name: 'M4 "SAMURAI"', price: 97, rarity: 'arcane' },
+        { name: 'CHARM "SIGIL"', price: 100, rarity: 'arcane' },
+        { name: 'STICKER "CARPET"', price: 110, rarity: 'epic' },
+        { name: 'VAL "GILDED GALE"', price: 120, rarity: 'arcane' },
+        { name: 'AWM "BOOM"', price: 125, rarity: 'arcane' },
+        { name: 'CHARM "HYPNO BEAST"', price: 139, rarity: 'arcane' },
+        { name: 'F/S "HELLSPAWN"', price: 151, rarity: 'legendary' },
+        { name: 'P90 "SAMURAI"', price: 190, rarity: 'arcane' },
+        { name: 'M4 "REVIVAL"', price: 200, rarity: 'legendary' },
+        { name: 'USP "STICKERBOMB"', price: 212, rarity: 'legendary' },
+        { name: 'UMP45 "BEAST"', price: 230, rarity: 'arcane' },
+        { name: 'AKR "NECROMANCER"', price: 250, rarity: 'legendary' },
+        { name: 'M40 "WINTER TRACK"', price: 280, rarity: 'epic' },
+        { name: 'G22 "MONSTER"', price: 300, rarity: 'epic' },
+        { name: 'M4A1 "BUBBLEGUM"', price: 320, rarity: 'arcane' },
+        { name: 'AKR12 "EMBERBIRD"', price: 350, rarity: 'arcane' },
+        { name: 'AKR "TAG KING"', price: 365, rarity: 'arcane' },
+        { name: 'AKR "GENESIS"', price: 382, rarity: 'arcane' },
+        { name: 'AWM "SPECTRAL"', price: 395, rarity: 'arcane' },
+        { name: 'DESERT EAGLE "BLOSSOM"', price: 415, rarity: 'legendary' },
+        { name: 'CHARM "LOW HP"', price: 439, rarity: 'legendary' },
+        { name: 'STICKER "DANGER ZONE"', price: 450, rarity: 'rare' },
+        { name: 'M4A1 "SPARKLING GAZE"', price: 490, rarity: 'arcane' },
+        { name: 'M4 "SAMURAI"', price: 500, rarity: 'arcane' },
+        { name: 'HE "HE HANAMI"', price: 522, rarity: 'arcane' },
+        { name: 'VAL "ORBIT"', price: 569, rarity: 'arcane' },
+        { name: 'FAMAS "FURY"', price: 603, rarity: 'arcane' },
+        { name: 'M4A1 "MERMAID"', price: 640, rarity: 'legendary' },
+        { name: 'GLOVES "HANAMI"', price: 666, rarity: 'arcane' },
+        { name: 'M4 "N-KAI"', price: 690, rarity: 'arcane' },
+        { name: 'KUKRI "SEA GLINT"', price: 705, rarity: 'arcane' },
+        { name: 'SCORPION "AHAU"', price: 710, rarity: 'arcane' },
+        { name: 'SCORPION "STARFALL"', price: 740, rarity: 'arcane' },
+        { name: 'DUAL DAGGERS "GRUNGE"', price: 790, rarity: 'arcane' },
+        { name: 'M4A1 "FEROCITY"', price: 800, rarity: 'arcane' },
+        { name: 'STILLETO "VOIDROOT"', price: 830, rarity: 'arcane' },
+        { name: 'AWM "GENESIS"', price: 840, rarity: 'arcane' },
+        { name: 'JKOMMANDO "PRISM"', price: 870, rarity: 'arcane' },
+        { name: 'STING "PELAGIA"', price: 910, rarity: 'arcane' },
+        { name: 'FANG "ICE STORM"', price: 950, rarity: 'arcane' },
+        { name: 'G22 "NEST"', price: 960, rarity: 'arcane' },
+        { name: 'P350 "BLIZZARD"', price: 985, rarity: 'legendary' },
+        { name: 'STILLETO "TIE DYE"', price: 1000, rarity: 'arcane' }
+    ];
+
+    function generateImageName(name) {
+        let clean = name.replace(/["]/g, '');
+        let words = clean.split(' ');
+        let formatted = words.map(word => {
+            if(word.length === 0) return '';
+            let cleanWord = word.replace('/', '');
+            if(/^[A-Z0-9]+$/.test(cleanWord) && cleanWord.length <= 5) {
+                return cleanWord;
+            }
+            return cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1).toLowerCase();
+        }).join(' ') + '.png';
+        return formatted;
+    }
+
+    fullShopData.forEach(skin => { skin.image = generateImageName(skin.name); });
+
+    const rarityColors = { 'rare': '#4d6df1', 'epic': '#8b5cf6', 'legendary': '#ec4899', 'arcane': '#ef4444' };
+    
+    let userBalance = 100;
+    let inventory = [];
+    let cart = [];
+    let currentSlots = [null, null, null, null, null, null];
+    let selectedItemForModal = null;
+    let selectedTarget = null;
+    let addedChance = 0;
+    let baseChance = 0;
+
+    const carousel = document.getElementById('carouselContainer');
+    fullShopData.slice(0, 8).forEach(skin => {
+        const d = document.createElement('div');
+        d.className = 'top-item';
+        d.innerHTML = `<div class="img"></div><div class="info"><span>${skin.name}</span><small>${skin.price}G</small></div>`;
+        carousel.appendChild(d);
+    });
+
+    // ДРОП-ТИКЕР
+    const dropTickerText = document.getElementById('dropTickerText');
+    const pcDropText = document.getElementById('pcDropText');
+    const pcFeed = document.getElementById('pcLiveFeedContainer');
+    
+    function triggerDrop() {
+        const usernames = ['xDarkWolfx', 'NoSkill', 'ProGamer', 'SniperElite', 'WarLord', 't0xic', 'NightHunter', 'Shadow'];
+        const randomUser = usernames[Math.floor(Math.random() * usernames.length)];
+        const randomSkin = fullShopData[Math.floor(Math.random() * fullShopData.length)];
+        const color = rarityColors[randomSkin.rarity];
+        const label = randomSkin.rarity.toUpperCase();
+
+        const dropHtml = `
+            <span style="color: #ffcc00; font-weight: 700;">${randomUser}</span> 
+            выбил <span style="color: ${color};">[${label}]</span> 
+            <strong style="color: ${color};">${randomSkin.name}</strong> 
+            <span style="color: #888;">${randomSkin.price}G</span>
+        `;
+        dropTickerText.innerHTML = dropHtml;
+        pcDropText.innerHTML = dropHtml;
+
+        const pcItem = document.createElement('div');
+        pcItem.className = 'pc-feed-item';
+        pcItem.innerHTML = `
+            <div class="img"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L2 22h20L12 2zm0 4.5L18.5 20h-13L12 6.5z"/></svg></div>
+            <div class="info">
+                <span class="name">${randomUser}</span>
+                <span class="desc">${randomSkin.name} <span style="color:${color};">${randomSkin.price}G</span></span>
+            </div>
+        `;
+        pcFeed.prepend(pcItem);
+        if(pcFeed.children.length > 25) pcFeed.removeChild(pcFeed.lastChild);
+    }
+    triggerDrop();
+    setInterval(triggerDrop, 3500);
+
+    const avatars = [
+        { bg: '#6e7b8c', letter: 'M' }, { bg: '#e06c75', letter: 'A' }, { bg: '#61afef', letter: 'B' },
+        { bg: '#98c379', letter: 'C' }, { bg: '#d19a66', letter: 'D' }, { bg: '#c678dd', letter: 'E' },
+        { bg: '#5c6370', letter: 'F' }, { bg: '#e5c07b', letter: 'G' }, { bg: '#abb2bf', letter: 'H' },
+        { bg: '#2bd183', letter: 'K' }
+    ];
+    
+    let userProfile = {
+        id: null,
+        nick: '',
+        avatarIndex: 0
+    };
+
+    function initProfile() {
+        let stored = localStorage.getItem('standoffUserProfile');
+        if (stored) {
+            userProfile = JSON.parse(stored);
+        } else {
+            let attempts = 0;
+            let newId;
+            do {
+                newId = Math.floor(100000 + Math.random() * 900000).toString();
+                attempts++;
+            } while (localStorage.getItem('userId_' + newId) && attempts < 10);
+            localStorage.setItem('userId_' + newId, '1');
+            userProfile.id = newId;
+            userProfile.nick = 'Игрок' + Math.floor(1000 + Math.random() * 9000);
+            localStorage.setItem('standoffUserProfile', JSON.stringify(userProfile));
+        }
+        document.getElementById('userIdDisplay').innerText = '#' + userProfile.id;
+        document.getElementById('nickInput').value = userProfile.nick;
+        renderAvatars();
+        updateAvatarUI();
+    }
+
+    function renderAvatars() {
+        const grid = document.getElementById('avatarGrid');
+        grid.innerHTML = '';
+        avatars.forEach((av, i) => {
+            const el = document.createElement('div');
+            el.className = 'av-grid-item' + (i === userProfile.avatarIndex ? ' selected' : '');
+            el.style.background = av.bg;
+            el.style.color = '#fff';
+            el.innerText = av.letter;
+            el.onclick = () => {
+                document.querySelectorAll('.av-grid-item').forEach(e => e.classList.remove('selected'));
+                el.classList.add('selected');
+                userProfile.avatarIndex = i;
+                updateAvatarUI();
+                saveProfile();
+            };
+            grid.appendChild(el);
+        });
+    }
+
+    function updateAvatarUI() {
+        const av = avatars[userProfile.avatarIndex];
+        const btn = document.getElementById('avatarBtnHeader');
+        const btnPc = document.getElementById('avatarBtnHeaderPC');
+        if(btn) { btn.style.background = av.bg; btn.innerText = av.letter; }
+        if(btnPc) { btnPc.style.background = av.bg; btnPc.innerText = av.letter; }
+    }
+
+    function saveProfile() {
+        const newNick = document.getElementById('nickInput').value.trim();
+        if(newNick) userProfile.nick = newNick;
+        localStorage.setItem('standoffUserProfile', JSON.stringify(userProfile));
+    }
+
+    // УПРАВЛЕНИЕ АПГРЕЙДОМ
+    function updateUpgradeUI() {
+        const count = currentSlots.filter(s => s !== null).length;
+        document.getElementById('slotCounter').innerText = `${count} из 6`;
+        
+        const imgWrapper = document.getElementById('selectedSkinImgWrapper');
+        const priceTag = document.getElementById('selectedSkinPrice');
+        const emptySlotText = document.getElementById('emptySlotText');
+        
+        if(count > 0) {
+            const firstSkinName = currentSlots.find(s => s !== null);
+            const skinData = fullShopData.find(s => s.name === firstSkinName);
+            if(skinData) {
+                imgWrapper.innerHTML = `<img src="${skinData.image || ''}" alt="${skinData.name}">`;
+                priceTag.style.display = 'flex';
+                priceTag.innerHTML = `${skinData.price} <span style="font-weight:900;">G</span>`;
+                emptySlotText.style.display = 'none';
+            }
+        } else {
+            imgWrapper.innerHTML = `<div style="color: #555; font-size: 8px; text-align: center;" id="emptySlotText">Пусто</div>`;
+            priceTag.style.display = 'none';
+        }
+        updateTargetUI();
+        calculateChance();
+    }
+
+    function updateTargetUI() {
+        const imgWrapper = document.getElementById('targetImgWrapper');
+        const priceTag = document.getElementById('targetPrice');
+        const emptyTargetText = document.getElementById('emptyTargetText');
+
+        if(selectedTarget) {
+            imgWrapper.innerHTML = `<img src="${selectedTarget.image || ''}" alt="${selectedTarget.name}">`;
+            priceTag.style.display = 'flex';
+            priceTag.innerHTML = `${selectedTarget.price} <span style="font-weight:900;">G</span>`;
+            emptyTargetText.style.display = 'none';
+        } else {
+            imgWrapper.innerHTML = `<div style="color: #555; font-size: 8px; text-align: center;" id="emptyTargetText">Не выбрана</div>`;
+            priceTag.style.display = 'none';
+        }
+        calculateChance();
+    }
+
+    function calculateChance() {
+        const count = currentSlots.filter(s => s !== null).length;
+        if(count > 0 && selectedTarget) {
+            const randBase = Math.random() * 15 + 5;
+            baseChance = Math.min(randBase, 85);
+        } else {
+            baseChance = 0;
+            addedChance = 0;
+            document.getElementById('chanceAddVal').innerText = '0 G';
+            document.getElementById('chanceSlider').value = 0;
+        }
+        updateChanceUI();
+    }
+
+    function updateChanceUI() {
+        const wheel = document.getElementById('wheelProgress');
+        const percText = document.getElementById('chancePerc');
+        const statusText = document.getElementById('chanceStatus');
+        const btn = document.getElementById('btnProkachatMain');
+
+        statusText.className = 'status';
+
+        if(baseChance === 0 || !selectedTarget) {
+            wheel.style.background = `conic-gradient(from 270deg, transparent 0%, transparent 100%)`;
+            percText.innerText = '?%';
+            statusText.innerText = 'ОЖИДАНИЕ СКИНОВ';
+            statusText.classList.add('waiting');
+            btn.classList.remove('active');
+            btn.classList.add('disabled');
+            return;
+        }
+
+        const percentage = Math.min(baseChance + addedChance, 95);
+        wheel.style.background = `conic-gradient(from 270deg, var(--accent-yellow) 0% ${percentage}%, transparent ${percentage}% 100%)`;
+        percText.innerText = percentage.toFixed(2) + '%';
+
+        if(percentage >= 60) {
+            statusText.innerText = 'ВЫСОКИЙ ШАНС';
+            statusText.classList.add('high');
+        } else if(percentage >= 25) {
+            statusText.innerText = 'СРЕДНИЙ ШАНС';
+            statusText.classList.add('medium');
+        } else if(percentage > 0) {
+            statusText.innerText = 'НИЗКИЙ ШАНС';
+            statusText.classList.add('medium');
+        }
+
+        btn.classList.add('active');
+        btn.classList.remove('disabled');
+    }
+
+    function addChance(amount) {
+        if(!selectedTarget || currentSlots.filter(s => s !== null).length === 0) return;
+        let cost = 0;
+        let chanceGain = 0;
+        if(amount === 'max') {
+            cost = userBalance;
+            chanceGain = cost / 10;
+        } else {
+            cost = amount;
+            chanceGain = amount / 10;
+        }
+        if(cost > userBalance) {
+            cost = userBalance;
+            chanceGain = cost / 10;
+        }
+        if(cost <= 0) return;
+        
+        userBalance -= cost;
+        addedChance = Math.min(addedChance + chanceGain, 95 - baseChance);
+        
+        updateBalanceUI();
+        document.getElementById('chanceAddVal').innerText = Math.round(addedChance * 10) + ' G';
+        document.getElementById('chanceSlider').value = Math.round(addedChance);
+        updateChanceUI();
+        filterSelection();
+        filterPCTargets();
+    }
+
+    function updateChanceFromSlider() {
+        const val = parseInt(document.getElementById('chanceSlider').value);
+        addedChance = val;
+        document.getElementById('chanceAddVal').innerText = Math.round(val * 10) + ' G';
+        updateChanceUI();
+    }
+
+    function setPreset(type) {
+        if(!selectedTarget || currentSlots.filter(s => s !== null).length === 0) return;
+        let newChance = 0;
+        if(type === 'x4') newChance = 40;
+        else if(type === 'x7') newChance = 70;
+        else if(type === 'x10') newChance = 95;
+        else if(type === '50%') newChance = 50;
+        else if(type === '85%') newChance = 85;
+        else if(type === '28%') newChance = 28;
+        
+        if(newChance < baseChance) return;
+        let neededChance = newChance - baseChance;
+        let cost = neededChance * 10;
+        if(cost > userBalance) {
+            cost = userBalance;
+            neededChance = cost / 10;
+        }
+        if(cost <= 0) return;
+        
+        userBalance -= cost;
+        addedChance = Math.min(addedChance + neededChance, 95 - baseChance);
+        updateBalanceUI();
+        document.getElementById('chanceAddVal').innerText = Math.round(addedChance * 10) + ' G';
+        document.getElementById('chanceSlider').value = Math.round(addedChance);
+        updateChanceUI();
+        filterSelection();
+        filterPCTargets();
+    }
+
+    function startWheelUpgrade() {
+        const btn = document.getElementById('btnProkachatMain');
+        if(btn.classList.contains('disabled') || !selectedTarget) return;
+        
+        const count = currentSlots.filter(s => s !== null).length;
+        if(count === 0) return;
+
+        const pointer = document.querySelector('.wheel-pointer');
+        let spins = 0;
+        let interval = setInterval(() => {
+            const deg = Math.random() * 360;
+            pointer.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+            spins++;
+            if(spins > 12) {
+                clearInterval(interval);
+                const roll = Math.random() * 100;
+                if(roll <= parseFloat(document.getElementById('chancePerc').innerText.replace('%', ''))) {
+                    alert(`🎉 УСПЕХ! Вы прокачались до ${selectedTarget.name}!`);
+                    currentSlots.fill(null);
+                    updateUpgradeUI();
+                    renderInventory();
+                } else {
+                    alert(`💥 НЕУДАЧА! Скины сгорели.`);
+                    currentSlots.fill(null);
+                    updateUpgradeUI();
+                }
+                addedChance = 0;
+                document.getElementById('chanceAddVal').innerText = '0 G';
+                document.getElementById('chanceSlider').value = 0;
+                calculateChance();
+                filterSelection();
+                filterPCTargets();
+            }
+        }, 150);
+    }
+
+    // ВЫБОР ЦЕЛЕЙ
+    let selectionMode = 'target';
+    let selectionTab = 'my';
+
+    function scrollToShop() {
+        selectionMode = 'skin';
+        document.getElementById('targetSelectionArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        switchSelectionTab('my', document.getElementById('tab-myItems'));
+    }
+
+    function scrollToTargetSelect() {
+        selectionMode = 'target';
+        document.getElementById('targetSelectionArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        switchSelectionTab('wish', document.getElementById('tab-wishlist'));
+    }
+
+    function switchSelectionTab(type, el) {
+        document.getElementById('tab-myItems').classList.remove('active');
+        document.getElementById('tab-wishlist').classList.remove('active');
+        el.classList.add('active');
+        selectionTab = type;
+        filterSelection();
+        filterPCTargets();
+    }
+
+    function filterSelection() {
+        const min = parseInt(document.getElementById('selPriceMin').value) || 0;
+        const max = parseInt(document.getElementById('selPriceMax').value) || Infinity;
+        let items = [];
+        if(selectionTab === 'my') {
+            items = inventory.filter(s => s.price >= min && s.price <= max);
+        } else {
+            items = fullShopData.filter(s => s.price >= min && s.price <= max);
+        }
+        renderSelection(items);
+    }
+
+    function renderSelection(items) {
+        const grid = document.getElementById('selectionGridContainer');
+        grid.innerHTML = '';
+        if(items.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1; color:#555; text-align:center; padding:20px;">Нет предметов в этой категории</div>`;
+            return;
+        }
+        items.forEach(skin => {
+            const d = document.createElement('div');
+            d.className = 'sel-item';
+            let p1 = skin.name, p2 = '';
+            if(skin.name.includes(' "')) { const parts = skin.name.split(' "'); p1 = parts[0]; p2 = `"${parts[1]}`; }
+            
+            const isSelected = (selectionMode === 'skin' && currentSlots.includes(skin.name)) || 
+                               (selectionMode === 'target' && selectedTarget && selectedTarget.name === skin.name);
+
+            if(isSelected) d.classList.add('selected');
+            
+            d.innerHTML = `
+                <div class="check-mark">✓</div>
+                <div class="img"><img src="${skin.image || ''}" alt="${skin.name}"></div>
+                <div class="name">${p2 || p1}</div>
+                <div class="price">${skin.price} G</div>
+            `;
+            
+            d.onclick = () => {
+                if(selectionMode === 'skin') {
+                    let added = false;
+                    for(let i=0; i<currentSlots.length; i++) {
+                        if(currentSlots[i] === null) {
+                            currentSlots[i] = skin.name;
+                            const idx = inventory.findIndex(s => s.name === skin.name);
+                            if(idx !== -1) inventory.splice(idx, 1);
+                            added = true;
+                            break;
+                        }
+                    }
+                    if(!added) {
+                        alert('Все 6 слотов заполнены!');
+                        return;
+                    }
+                    renderInventory();
+                    updateUpgradeUI();
+                    filterSelection();
+                    filterPCTargets();
+                } else if(selectionMode === 'target') {
+                    selectedTarget = skin;
+                    updateTargetUI();
+                    filterSelection();
+                    filterPCTargets();
+                }
+            };
+            grid.appendChild(d);
+        });
+    }
+
+    // ПК Колонка целей
+    function filterPCTargets() {
+        const min = parseInt(document.getElementById('pcPriceMin').value) || 0;
+        const max = parseInt(document.getElementById('pcPriceMax').value) || Infinity;
+        let items = fullShopData.filter(s => s.price >= min && s.price <= max);
+        renderPCTargets(items);
+    }
+
+    function renderPCTargets(items) {
+        const grid = document.getElementById('pcTargetGrid');
+        grid.innerHTML = '';
+        if(items.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1; color:#555; text-align:center; padding:20px;">Нет предметов</div>`;
+            return;
+        }
+        items.forEach(skin => {
+            const d = document.createElement('div');
+            d.className = 'sel-item';
+            let p1 = skin.name, p2 = '';
+            if(skin.name.includes(' "')) { const parts = skin.name.split(' "'); p1 = parts[0]; p2 = `"${parts[1]}`; }
+            
+            const isSelected = selectedTarget && selectedTarget.name === skin.name;
+
+            if(isSelected) d.classList.add('selected');
+            
+            d.innerHTML = `
+                <div class="check-mark">✓</div>
+                <div class="img"><img src="${skin.image || ''}" alt="${skin.name}"></div>
+                <div class="name">${p2 || p1}</div>
+                <div class="price">${skin.price} G</div>
+            `;
+            
+            d.onclick = () => {
+                selectedTarget = skin;
+                updateTargetUI();
+                filterSelection();
+                filterPCTargets();
+            };
+            grid.appendChild(d);
+        });
+    }
+
+    // ИНВЕНТАРЬ
+    const invGrid = document.getElementById('inventoryGrid');
+    const invEmpty = document.getElementById('inventoryView');
+    function renderInventory() {
+        if(inventory.length === 0) { invGrid.style.display = 'none'; invEmpty.style.display = 'flex'; return; }
+        invGrid.style.display = 'grid'; invEmpty.style.display = 'none';
+        invGrid.innerHTML = '';
+        inventory.forEach((item, idx) => {
+            const d = document.createElement('div');
+            d.className = 'inv-item';
+            let p1 = item.name, p2 = '';
+            if(item.name.includes(' "')) { const parts = item.name.split(' "'); p1 = parts[0]; p2 = `"${parts[1]}`; }
+            d.innerHTML = `
+                <div class="inv-rarity" style="background:${rarityColors[item.rarity]};"></div>
+                <div class="inv-img" style="background:#15151f; display:flex; justify-content:center; align-items:center;"><img src="${item.image || ''}" style="max-width:80%;max-height:80%;object-fit:contain;"></div>
+                <div class="inv-name" style="color:${rarityColors[item.rarity]};">${p2 || p1}</div>
+            `;
+            d.onclick = () => { selectedItemForModal = idx; document.getElementById('modalSkinTitle').innerText = item.name; document.getElementById('modalSkinSub').innerText = item.name; document.getElementById('inventoryModal').classList.add('active'); };
+            invGrid.appendChild(d);
+        });
+    }
+
+    function addSkinToSlot() {
+        if(selectedItemForModal === null) return;
+        const skin = inventory[selectedItemForModal];
+        let added = false;
+        for(let i=0; i<currentSlots.length; i++) {
+            if(currentSlots[i] === null) {
+                currentSlots[i] = skin.name;
+                inventory.splice(selectedItemForModal, 1);
+                added = true;
+                break;
+            }
+        }
+        closeInvModal(); renderInventory(); updateUpgradeUI(); filterSelection(); filterPCTargets();
+        if(!added) alert('Все слоты заполнены!');
+    }
+
+    function sellFromInventory() { if(selectedItemForModal === null) return; inventory.splice(selectedItemForModal, 1); closeInvModal(); renderInventory(); filterSelection(); filterPCTargets(); }
+    function closeInvModal() { document.getElementById('inventoryModal').classList.remove('active'); selectedItemForModal = null; }
+
+    // МАГАЗИН И КОРЗИНА
+    const shopGrid = document.getElementById('shopGridContainer');
+    function renderShop(items) {
+        shopGrid.innerHTML = '';
+        items.forEach(skin => {
+            const d = document.createElement('div');
+            d.className = 'shop-item';
+            let p1 = skin.name, p2 = '';
+            if(skin.name.includes(' "')) { const parts = skin.name.split(' "'); p1 = parts[0]; p2 = `"${parts[1]}`; }
+            d.innerHTML = `
+                <div class="price-tag">${skin.price} <span style="font-weight:900;">G</span></div>
+                <div class="check-mark">✓</div>
+                <div class="img-wrapper"><img src="${skin.image || ''}" alt="${skin.name}" style="background:#15151f;"></div>
+                <div class="item-info">
+                    <div class="item-name">${p1}<br><span class="skin-title" style="color:${rarityColors[skin.rarity]} !important;">${p2 || p1}</span></div>
+                    <div class="season-tag">S1</div>
+                </div>
+            `;
+            d.onclick = () => toggleCartItem(skin);
+            shopGrid.appendChild(d);
+        });
+    }
+
+    function toggleCartItem(skin) {
+        const idx = cart.findIndex(i => i.name === skin.name);
+        if(idx !== -1) cart.splice(idx, 1);
+        else cart.push({ ...skin, qty: 1 });
+        updateCartUI();
+        filterShop();
+    }
+
+    function updateCartUI() {
+        const totalCount = cart.reduce((s, i) => s + i.qty, 0);
+        document.getElementById('headerBadge').innerText = totalCount;
+        document.getElementById('filterBadge').innerText = totalCount;
+        document.getElementById('cartQtyLabel').innerText = `${totalCount} ПРЕДМЕТОВ`;
+        const totalPrice = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+        document.getElementById('cartTotalPrice').innerText = totalPrice.toLocaleString();
+        document.getElementById('btnPay').innerText = `ОПЛАТИТЬ (${totalCount})`;
+        const btnPay = document.getElementById('btnPay');
+        if(totalPrice > userBalance || cart.length === 0) {
+            btnPay.classList.add('disabled');
+            btnPay.style.pointerEvents = 'none';
+        } else {
+            btnPay.classList.remove('disabled');
+            btnPay.style.pointerEvents = 'auto';
+        }
+        renderCartList();
+    }
+
+    function renderCartList() {
+        const list = document.getElementById('cartList');
+        list.innerHTML = '';
+        if(cart.length === 0) { list.innerHTML = `<div style="text-align:center;color:#555;padding:20px;font-size:12px;">Корзина пуста</div>`; return; }
+        cart.forEach((item, idx) => {
+            const d = document.createElement('div');
+            d.className = 'cart-item';
+            d.innerHTML = `
+                <div class="cart-item-img">🏹</div>
+                <div class="cart-item-info">
+                    <div class="name-top">${item.name}</div>
+                    <div class="sub-bottom">${item.name.split(' ')[0]}</div>
+                    <div class="price-g">${item.price} G</div>
+                </div>
+                <div class="cart-item-ctrl">
+                    <div class="qty-box">
+                        <button class="qty-btn" onclick="changeCartQty(${idx}, -1)">-</button>
+                        <div class="qty-val">${item.qty}</div>
+                        <button class="qty-btn" onclick="changeCartQty(${idx}, 1)">+</button>
+                    </div>
+                    <button class="cart-del" onclick="removeFromCart(${idx})">УДАЛИТЬ</button>
+                </div>
+            `;
+            list.appendChild(d);
+        });
+    }
+
+    function changeCartQty(idx, delta) {
+        if(cart[idx].qty + delta <= 0) { removeFromCart(idx); return; }
+        cart[idx].qty += delta;
+        updateCartUI();
+    }
+    function removeFromCart(idx) { cart.splice(idx, 1); updateCartUI(); filterShop(); }
+    function clearCart() { cart = []; updateCartUI(); filterShop(); }
+    function payCart() {
+        if(cart.length === 0) return;
+        const totalPrice = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+        if(userBalance < totalPrice) return; 
+        userBalance -= totalPrice;
+        updateBalanceUI();
+        cart.forEach(item => { for(let i=0; i<item.qty; i++) inventory.push({ ...item, id: Date.now() + i }); });
+        cart = []; updateCartUI(); filterShop(); toggleCartModal(); renderInventory(); switchShopTab('inventory', document.getElementById('tab-inventory'));
+        updateUpgradeUI();
+    }
+
+    function updateBalanceUI() {
+        document.getElementById('userBalanceDisplay').innerText = userBalance;
+    }
+
+    function filterShop() {
+        const min = parseInt(document.getElementById('priceMin').value) || 0;
+        const max = parseInt(document.getElementById('priceMax').value) || Infinity;
+        let filtered = fullShopData.filter(s => s.price >= min && s.price <= max);
+        renderShop(filtered);
+        document.querySelectorAll('.shop-item').forEach(el => { if(cart.some(c => el.innerText.includes(c.name))) el.classList.add('in-cart'); });
+        if(filtered.length === 0) shopGrid.innerHTML = `<div style="grid-column:1/-1; padding:40px 0; text-align:center; color:#555;">Ничего не найдено</div>`;
+    }
+
+    function switchShopTab(type, el) {
+        document.getElementById('tab-inventory').classList.remove('active');
+        document.getElementById('tab-shop').classList.remove('active');
+        el.classList.add('active');
+        if(type === 'inventory') {
+            document.getElementById('inventoryView').style.display = inventory.length ? 'none' : 'flex';
+            invGrid.style.display = inventory.length ? 'grid' : 'none';
+            document.getElementById('shopView').style.display = 'none';
+        } else {
+            document.getElementById('inventoryView').style.display = 'none';
+            invGrid.style.display = 'none';
+            document.getElementById('shopView').style.display = 'block';
+            filterShop();
+        }
+    }
+
+    function navigateTo(viewId, el) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        if(el && !el.classList.contains('nav-center')) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
+    }
+
+    function toggleCartModal() { document.getElementById('cartModal').classList.toggle('active'); if(document.getElementById('cartModal').classList.contains('active')) updateCartUI(); }
+    function toggleProfileModal() { document.getElementById('profileModal').classList.toggle('active'); }
+    function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('active'); }
+    function openSettings() { document.getElementById('settingsOverlay').classList.add('active'); }
+    function closeSettings() { document.getElementById('settingsOverlay').classList.remove('active'); }
+    function selectQuick(el) { el.closest('.quick-buttons').querySelectorAll('.quick-btn').forEach(b => b.classList.remove('selected')); el.classList.add('selected'); }
+    function selectRadio(el) { el.closest('.radio-group').querySelectorAll('.radio-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+
+    initProfile();
+    updateUpgradeUI();
+    updateBalanceUI();
+    document.getElementById('inventoryView').style.display = 'flex';
+    document.getElementById('shopView').style.display = 'none';
+    updateCartUI();
+</script>
+</body>
+</html>
